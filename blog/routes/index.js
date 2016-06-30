@@ -1,6 +1,20 @@
 var crypto = require('crypto'),
     User = require('../models/user.js'),
-    Post = require('../models/post.js');
+    Post = require('../models/post.js'),
+    multer  = require('multer');
+
+
+var storage = multer.diskStorage({
+    destination: function (req, file, cb){
+        cb(null, './public/images')
+    },
+    filename: function (req, file, cb){
+        cb(null, file.originalname)
+    }
+});
+var upload = multer({
+    storage: storage
+});
 
 module.exports = function(app){
   app.get('/', function(req, res, next) {
@@ -129,6 +143,22 @@ module.exports = function(app){
     req.session.user = null;
   req.flash('success', 'Logout successfully');
   res.redirect('/');//登出成功后跳转到主页
+  });
+
+  app.get('/upload', checkLogin);
+  app.get('/upload', function (req, res) {
+    res.render('upload', {
+      title: '文件上传',
+      user: req.session.user,
+      success: req.flash('success').toString(),
+      error: req.flash('error').toString()
+    });
+  });
+
+  app.post('/upload', checkLogin);
+    app.post('/upload', upload.array('field1', 5), function (req, res) {
+      req.flash('success', 'Upload successfully!');
+      res.redirect('/upload');
   });
 
    function checkLogin(req, res, next) {
